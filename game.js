@@ -62,7 +62,11 @@ class Player extends Entity {
             this.onGround = false;
         }
 
-        this.dy += GRAVITY;
+        if (!this.onGround) {
+            this.dy += GRAVITY;
+        } else {
+            this.dy = 0;
+        }
         this.x += this.dx;
         this.y += this.dy;
     }

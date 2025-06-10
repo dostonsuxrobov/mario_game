@@ -62,7 +62,15 @@ class Player extends Entity {
             this.onGround = false;
         }
 
+
+        if (!this.onGround) {
+            this.dy += GRAVITY;
+        } else {
+            this.dy = 0;
+        }
+
         this.dy += GRAVITY;
+
         this.x += this.dx;
         this.y += this.dy;
     }
@@ -129,8 +137,14 @@ function tileAt(x,y) {
 
 function resolveCollisions(entity) {
     if (!entity.alive) return;
+
+    entity.onGround = false;
+    const aheadX = entity.dx > 0 ? entity.right : entity.left;
+    const aheadY = entity.dy >= 0 ? entity.bottom : entity.top;
+
     const aheadX = entity.dx > 0 ? entity.right : entity.left;
     const aheadY = entity.dy > 0 ? entity.bottom : entity.top;
+
 
     const tx = Math.floor(aheadX / TILE);
     const ty = Math.floor(aheadY / TILE);

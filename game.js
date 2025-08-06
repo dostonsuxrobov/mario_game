@@ -16,7 +16,7 @@ const LEVELS = [
         '...................bbb..........................................',
         '..............................................g.................',
         '..........c....................................................F',
-        'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
     ],
     [
         '................................................................',
@@ -31,7 +31,7 @@ const LEVELS = [
         '...............................bbb..............................',
         '................................................................',
         '..............c................................................F',
-        'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
     ],
     [
         '................................................................',
@@ -84,7 +84,7 @@ class Entity {
 
 class Player extends Entity {
     constructor(x, y) {
-        super(x, y, TILE, TILE*1.5);
+        super(x, y, TILE, TILE * 1.5);
         this.score = 0;
     }
     update(keys) {
@@ -97,14 +97,11 @@ class Player extends Entity {
             this.onGround = false;
         }
 
-
         if (!this.onGround) {
             this.dy += GRAVITY;
         } else {
             this.dy = 0;
         }
-
-        this.dy += GRAVITY;
 
         this.x += this.dx;
         this.y += this.dy;
@@ -126,6 +123,7 @@ class Enemy extends Entity {
         this.y += this.dy;
     }
     draw(offsetX) {
+        if (!this.alive) return;
         ctx.fillStyle = COLORS.enemy;
         ctx.fillRect(Math.floor(this.x - offsetX), Math.floor(this.y), this.w, this.h);
     }
@@ -136,6 +134,7 @@ let enemies = [];
 let coins = [];
 let flag = null;
 let keys = {};
+let gameState = 'playing'; // 'playing', 'win', 'lose'
 
 function loadLevel(index) {
     currentLevel = index;
@@ -143,27 +142,28 @@ function loadLevel(index) {
     enemies = [];
     coins = [];
     flag = null;
-    for (let y=0;y<LEVEL.length;y++) {
-        for (let x=0;x<LEVEL[y].length;x++) {
+    for (let y = 0; y < LEVEL.length; y++) {
+        for (let x = 0; x < LEVEL[y].length; x++) {
             const ch = LEVEL[y][x];
-            const worldX = x*TILE;
-            const worldY = y*TILE;
+            const worldX = x * TILE;
+            const worldY = y * TILE;
             if (ch === 'g') {
                 enemies.push(new Enemy(worldX, worldY - TILE));
             } else if (ch === 'c') {
-                coins.push({x: worldX, y: worldY - TILE, w:TILE/2, h:TILE/2, collected:false});
+                coins.push({ x: worldX, y: worldY - TILE, w: TILE / 2, h: TILE / 2, collected: false });
             } else if (ch === 'F') {
-                flag = {x: worldX, y: worldY - TILE*2, w:TILE/2, h:TILE*2};
+                flag = { x: worldX, y: worldY - TILE * 2, w: TILE / 2, h: TILE * 2 };
             }
         }
     }
-    player.x = 2*TILE;
-    player.y = 10*TILE;
+    player.x = 2 * TILE;
+    player.y = 10 * TILE;
     player.dx = player.dy = 0;
+    gameState = 'playing';
 }
 
 function init() {
-    player = new Player(2*TILE, 10*TILE);
+    player = new Player(2 * TILE, 10 * TILE);
     loadLevel(0);
     window.requestAnimationFrame(gameLoop);
 }
@@ -175,7 +175,7 @@ function collision(a, b) {
     return a.right > b.left && a.left < b.right && a.bottom > b.top && a.top < b.bottom;
 }
 
-function tileAt(x,y) {
+function tileAt(x, y) {
     const tx = Math.floor(x / TILE);
     const ty = Math.floor(y / TILE);
     if (ty < 0 || ty >= LEVEL.length || tx < 0 || tx >= LEVEL[ty].length) return ' ';
@@ -186,57 +186,91 @@ function resolveCollisions(entity) {
     if (!entity.alive) return;
 
     entity.onGround = false;
-    const aheadX = entity.dx > 0 ? entity.right : entity.left;
-    const aheadY = entity.dy > 0 ? entity.bottom : entity.top;
+
+    // Check for collisions and resolve them
+    const checkTiles = (x, y) => {
+        const tile = tileAt(x, y);
+        return tile !== '.' && tile !== 'c' && tile !== 'g' && tile !== 'F' && tile !== ' ';
+    };
+
+    // Vertical collision
+    const verticalTiles = Math.ceil(entity.w / TILE);
+    for (let i = 0; i < verticalTiles; i++) {
+        const checkX = entity.left + i * TILE;
+        if (entity.dy > 0) { // Moving down
+            if (checkTiles(checkX, entity.bottom)) {
+                entity.y = Math.floor(entity.bottom / TILE) * TILE - entity.h;
+                entity.dy = 0;
+                entity.onGround = true;
+            }
+        } else if (entity.dy < 0) { // Moving up
+            if (checkTiles(checkX, entity.top)) {
+                entity.y = Math.floor(entity.top / TILE + 1) * TILE;
+                entity.dy = 0;
+            }
+        }
+    }
 
 
-    const tx = Math.floor(aheadX / TILE);
-    const ty = Math.floor(aheadY / TILE);
+    // Horizontal collision
+    const horizontalTiles = Math.ceil(entity.h / TILE);
+    for (let i = 0; i < horizontalTiles; i++) {
+        const checkY = entity.top + i * TILE;
+        if (entity.dx > 0) { // Moving right
+            if (checkTiles(entity.right, checkY)) {
+                entity.x = Math.floor(entity.right / TILE) * TILE - entity.w;
+                entity.dx = 0;
+                if(entity instanceof Enemy) entity.dx = -1;
+            }
+        } else if (entity.dx < 0) { // Moving left
+            if (checkTiles(entity.left, checkY)) {
+                entity.x = Math.floor(entity.left / TILE + 1) * TILE;
+                entity.dx = 0;
+                if(entity instanceof Enemy) entity.dx = 1;
 
-    for (let y = ty - 1; y <= ty + 1; y++) {
-        for (let x = tx - 1; x <= tx + 1; x++) {
-            const tile = tileAt(x*TILE, y*TILE);
-            if (tile === '.' || tile === 'c' || tile === 'g' || tile === 'F') continue;
-            const rect = {x:x*TILE, y:y*TILE, w:TILE, h:TILE};
-            if (collision(entity, rect)) {
-                if (entity.dy > 0 && entity.bottom > rect.top && entity.top < rect.top) {
-                    entity.y = rect.top - entity.h;
-                    entity.dy = 0;
-                    entity.onGround = true;
-                } else if (entity.dy < 0 && entity.top < rect.bottom && entity.bottom > rect.bottom) {
-                    entity.y = rect.bottom;
-                    entity.dy = 0;
-                } else if (entity.dx > 0 && entity.right > rect.left && entity.left < rect.left) {
-                    entity.x = rect.left - entity.w;
-                    entity.dx = 0;
-                } else if (entity.dx < 0 && entity.left < rect.right && entity.right > rect.right) {
-                    entity.x = rect.right;
-                    entity.dx = 0;
-                }
             }
         }
     }
 }
 
 function gameLoop() {
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    const cameraX = Math.max(0, player.x - canvas.width/2);
+    if (gameState !== 'playing') {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#fff';
+        ctx.font = '32px monospace';
+        ctx.textAlign = 'center';
+        if (gameState === 'win') {
+            ctx.fillText('You Win!', canvas.width / 2, canvas.height / 2 - 20);
+            ctx.font = '16px monospace';
+            ctx.fillText('Score: ' + player.score, canvas.width / 2, canvas.height / 2 + 20);
+        } else { // lose
+            ctx.fillText('Game Over', canvas.width / 2, canvas.height / 2 - 20);
+            ctx.font = '16px monospace';
+            ctx.fillText('Press R to restart', canvas.width/2, canvas.height/2 + 20);
+            if(keys['KeyR']) {
+                init();
+            }
+        }
+        window.requestAnimationFrame(gameLoop);
+        return;
+    }
+
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const cameraX = Math.max(0, player.x - canvas.width / 2);
 
     // draw level
-    for (let y=0;y<LEVEL.length;y++) {
-        for (let x=0;x<LEVEL[y].length;x++) {
+    for (let y = 0; y < LEVEL.length; y++) {
+        for (let x = 0; x < LEVEL[y].length; x++) {
             const tile = LEVEL[y][x];
-            const drawX = x*TILE - cameraX;
-            const drawY = y*TILE;
+            const drawX = x * TILE - cameraX;
+            const drawY = y * TILE;
             if (tile === 'b') {
                 ctx.fillStyle = COLORS.brick;
                 ctx.fillRect(drawX, drawY, TILE, TILE);
-            } else if (tile === ' ') {
-                // skip
-            } else if (tile === '.') {
-                // skip
-            } else if (tile === 'g' || tile === 'c' || tile === 'F') {
-                // handled separately
+            } else if (tile === ' ' || tile === '.' || tile === 'g' || tile === 'c' || tile === 'F') {
+                // skip, handled separately
             } else {
                 ctx.fillStyle = COLORS.ground;
                 ctx.fillRect(drawX, drawY, TILE, TILE);
@@ -262,13 +296,12 @@ function gameLoop() {
         enemy.update();
         resolveCollisions(enemy);
         if (collision(player, enemy)) {
-            if (player.dy > 0 && player.bottom < enemy.y + enemy.h/2) {
+            if (player.dy > 0 && player.bottom < enemy.y + enemy.h / 2) {
                 enemy.alive = false;
                 player.dy = -5;
                 player.score += 5;
             } else {
-                // reset current level
-                loadLevel(currentLevel);
+                gameState = 'lose';
             }
         }
         enemy.draw(cameraX);
@@ -281,11 +314,8 @@ function gameLoop() {
         if (collision(player, flag)) {
             if (currentLevel < LEVELS.length - 1) {
                 loadLevel(currentLevel + 1);
-                return;
             } else {
-                alert('You win! Score: ' + player.score);
-                window.location.reload();
-                return;
+                gameState = 'win';
             }
         }
     }
@@ -298,7 +328,7 @@ function gameLoop() {
     // draw score
     ctx.fillStyle = '#fff';
     ctx.font = '16px monospace';
-    ctx.fillText('Score: '+player.score, 10, 20);
+    ctx.fillText('Score: ' + player.score, 10, 20);
 
     window.requestAnimationFrame(gameLoop);
 }

@@ -272,7 +272,9 @@ function parseLevel(index) {
                         break;
                     }
                 }
-                flag = new Flag(worldX + TILE / 2, baseY, TILE * 6);
+                const flagWidth = TILE / 2;
+                const flagX = worldX + (TILE - flagWidth) / 2;
+                flag = new Flag(flagX, baseY, TILE * 6);
                 rows[y][x] = '.';
             } else if (ch === '|') {
                 rows[y][x] = '.';
@@ -432,7 +434,7 @@ function updateCoins() {
 
 function updateFlag() {
     if (!flag) return;
-    const flagRect = { x: flag.x - flag.w / 2, y: flag.y - flag.h, w: flag.w, h: flag.h };
+    const flagRect = { x: flag.x, y: flag.y - flag.h, w: flag.w, h: flag.h };
     if (rectOverlap(player, flagRect)) {
         completeLevel();
     }

@@ -585,6 +585,10 @@ function updateGame() {
         return;
     }
 
+    if (!level || !player) {
+        return;
+    }
+
     if (state === 'levelComplete') {
         stateTimer--;
         if (stateTimer <= 0) {
@@ -603,7 +607,13 @@ function updateGame() {
 }
 
 function drawGame() {
-    if (!level || !canvas || !ctx) {
+    if (!canvas || !ctx) {
+        return;
+    }
+
+    if (!level || !player) {
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
         return;
     }
     const cameraX = Math.max(0, Math.min(player.x - canvas.width / 2, level.width - canvas.width));

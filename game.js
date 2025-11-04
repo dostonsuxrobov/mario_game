@@ -257,6 +257,7 @@ let state = 'title'; // title, playing, levelComplete, gameOver, victory
 let stateTimer = 0;
 let frameCounter = 0;
 let timeLeft = 0;
+let animationFrameId = null; // Store RAF ID for cleanup
 
 function parseLevel(index) {
     const data = LEVELS[index];
@@ -670,7 +671,7 @@ function resetGame() {
 function gameLoop() {
     updateGame();
     drawGame();
-    requestAnimationFrame(gameLoop);
+    animationFrameId = requestAnimationFrame(gameLoop);
 }
 
 function startGame() {
@@ -680,7 +681,8 @@ function startGame() {
     frameCounter = 0;
 }
 
-document.addEventListener('keydown', (e) => {
+// Named event handlers for proper cleanup
+function handleKeyDown(e) {
     if (['ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
         e.preventDefault();
     }
@@ -697,14 +699,33 @@ document.addEventListener('keydown', (e) => {
             state = 'title';
         }
     }
-});
+}
 
-document.addEventListener('keyup', (e) => {
+function handleKeyUp(e) {
     if (['ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
         e.preventDefault();
     }
     keys[e.code] = false;
-});
+}
+
+// Cleanup function to prevent multiple game loops
+function cleanup() {
+    // Cancel the animation frame to stop the game loop
+    if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+        animationFrameId = null;
+    }
+    // Remove event listeners
+    document.removeEventListener('keydown', handleKeyDown);
+    document.removeEventListener('keyup', handleKeyUp);
+}
+
+// Add event listeners
+document.addEventListener('keydown', handleKeyDown);
+document.addEventListener('keyup', handleKeyUp);
+
+// Cleanup on page unload/refresh to prevent multiple loops
+window.addEventListener('beforeunload', cleanup);
 
 startGame();
 state = 'title';

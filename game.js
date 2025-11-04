@@ -2,11 +2,11 @@ const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
 const TILE = 16;
-const GRAVITY = 0.35;
-const RUN_ACCEL = 0.3;
-const MAX_RUN_SPEED = 2;
-const JUMP_SPEED = 7.5;
-const MAX_FALL_SPEED = 9;
+const GRAVITY = 0.105; // 0.35 * 0.3
+const RUN_ACCEL = 0.09; // 0.3 * 0.3
+const MAX_RUN_SPEED = 0.6; // 2 * 0.3
+const JUMP_SPEED = 2.25; // 7.5 * 0.3
+const MAX_FALL_SPEED = 2.7; // 9 * 0.3
 
 const COLORS = {
     skyTop: '#79c8ff',
@@ -117,6 +117,7 @@ class Player extends Entity {
         this.coins = 0;
         this.lives = 3;
         this.invincibleTimer = 0;
+        this.canDoubleJump = false;
     }
 
     resetToSpawn() {
@@ -125,9 +126,10 @@ class Player extends Entity {
         this.dx = 0;
         this.dy = 0;
         this.onGround = false;
+        this.canDoubleJump = false;
     }
 
-    update(keys) {
+    update(keys, prevKeys) {
         if (this.invincibleTimer > 0) {
             this.invincibleTimer--;
         }
@@ -141,9 +143,24 @@ class Player extends Entity {
             if (Math.abs(this.dx) < 0.05) this.dx = 0;
         }
 
-        if ((keys.Space || keys.KeyZ) && this.onGround) {
+        // Double jump logic
+        const jumpPressed = keys.Space || keys.KeyZ;
+        const jumpJustPressed = jumpPressed && !(prevKeys.Space || prevKeys.KeyZ);
+
+        if (jumpJustPressed && this.onGround) {
+            // First jump
             this.dy = -JUMP_SPEED;
             this.onGround = false;
+            this.canDoubleJump = true;
+        } else if (jumpJustPressed && this.canDoubleJump && !this.onGround) {
+            // Second jump (double jump)
+            this.dy = -JUMP_SPEED;
+            this.canDoubleJump = false;
+        }
+
+        // Reset double jump when landing
+        if (this.onGround) {
+            this.canDoubleJump = false;
         }
     }
 
@@ -162,7 +179,7 @@ class Player extends Entity {
 class Enemy extends Entity {
     constructor(x, y) {
         super(x, y, TILE, TILE);
-        this.speed = 1;
+        this.speed = 0.3; // 1 * 0.3
         this.dx = -this.speed;
     }
 
@@ -235,6 +252,7 @@ let enemies = [];
 let coins = [];
 let flag = null;
 let keys = {};
+let prevKeys = {};
 let state = 'title'; // title, playing, levelComplete, gameOver, victory
 let stateTimer = 0;
 let frameCounter = 0;
@@ -374,7 +392,7 @@ function bumpQuestionBlock(tx, ty) {
 }
 
 function updatePlayer() {
-    player.update(keys);
+    player.update(keys, prevKeys);
     player.dy = Math.min(player.dy + GRAVITY, MAX_FALL_SPEED);
 
     player.x += player.dx;
@@ -593,6 +611,9 @@ function updateGame() {
     updateEnemies();
     updateCoins();
     updateFlag();
+
+    // Update previous keys state for next frame
+    prevKeys = { ...keys };
 }
 
 function drawGame() {

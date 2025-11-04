@@ -136,9 +136,6 @@ class Player extends Entity {
             this.dx = Math.max(this.dx - RUN_ACCEL, -MAX_RUN_SPEED);
         } else if (keys.ArrowRight) {
             this.dx = Math.min(this.dx + RUN_ACCEL, MAX_RUN_SPEED);
-            this.dx = Math.max(this.dx - 0.5, -MAX_RUN_SPEED);
-        } else if (keys.ArrowRight) {
-            this.dx = Math.min(this.dx + 0.5, MAX_RUN_SPEED);
         } else {
             this.dx *= 0.8;
             if (Math.abs(this.dx) < 0.05) this.dx = 0;
@@ -165,7 +162,6 @@ class Player extends Entity {
 class Enemy extends Entity {
     constructor(x, y) {
         super(x, y, TILE, TILE);
-        this.speed = 0.6;
         this.speed = 1;
         this.dx = -this.speed;
     }
@@ -182,56 +178,6 @@ class Enemy extends Entity {
         ctx.fill();
         ctx.fillStyle = '#145a32';
         ctx.fillRect(Math.floor(this.x - offsetX + 2), Math.floor(this.y + this.h - 4), this.w - 4, 4);
-    }
-}
-
-class Flag {
-    constructor(x, y, height) {
-        this.x = x;
-        this.y = y;
-        this.w = TILE / 2;
-        this.h = height;
-    }
-
-    draw(offsetX) {
-        ctx.fillStyle = COLORS.flagPole;
-        ctx.fillRect(Math.floor(this.x - offsetX), Math.floor(this.y - this.h), this.w, this.h);
-        ctx.fillStyle = COLORS.flag;
-        ctx.beginPath();
-        ctx.moveTo(Math.floor(this.x - offsetX + this.w), Math.floor(this.y - this.h + 4));
-        ctx.lineTo(Math.floor(this.x - offsetX + this.w + TILE * 1.5), Math.floor(this.y - this.h + TILE));
-        ctx.lineTo(Math.floor(this.x - offsetX + this.w), Math.floor(this.y - this.h + TILE * 1.5));
-        ctx.closePath();
-        ctx.fill();
-    }
-}
-
-class Coin {
-    constructor(x, y) {
-        this.x = x;
-        this.y = y;
-        this.w = TILE / 2;
-        this.h = TILE / 2;
-        this.collectTimer = 0;
-        this.collected = false;
-    }
-
-    update() {
-        if (this.collectTimer > 0) {
-            this.collectTimer--;
-        }
-    }
-
-    draw(offsetX) {
-        if (this.collected && this.collectTimer === 0) return;
-        ctx.fillStyle = '#ffd700';
-        const bob = Math.sin(Date.now() / 150) * 2;
-        ctx.beginPath();
-        ctx.arc(Math.floor(this.x - offsetX + this.w / 2), Math.floor(this.y + bob + this.h / 2), this.w / 2, 0, Math.PI * 2);
-        ctx.fill();
-    }
-}
-
     }
 }
 
@@ -326,10 +272,7 @@ function parseLevel(index) {
                         break;
                     }
                 }
-                const flagWidth = TILE / 2;
-                const flagX = worldX + (TILE - flagWidth) / 2;
-                flag = new Flag(flagX, baseY, TILE * 6);
-                flag = new Flag(worldX + TILE / 2, baseY, TILE * 6);
+                flag = new Flag(worldX + TILE / 4, baseY, TILE * 6);
                 rows[y][x] = '.';
             } else if (ch === '|') {
                 rows[y][x] = '.';
@@ -348,15 +291,6 @@ function parseLevel(index) {
         width: levelWidth,
         height: levelHeight
     };
-
-    if (!player) {
-        player = new Player(spawnX, spawnY);
-    } else {
-        player.spawnX = spawnX;
-        player.spawnY = spawnY;
-        player.resetToSpawn();
-    }
-
 
     if (!player) {
         player = new Player(spawnX, spawnY);
@@ -499,7 +433,6 @@ function updateCoins() {
 function updateFlag() {
     if (!flag) return;
     const flagRect = { x: flag.x, y: flag.y - flag.h, w: flag.w, h: flag.h };
-    const flagRect = { x: flag.x - flag.w / 2, y: flag.y - flag.h, w: flag.w, h: flag.h };
     if (rectOverlap(player, flagRect)) {
         completeLevel();
     }

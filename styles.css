@@ -1,0 +1,101 @@
+:root {
+  color-scheme: dark;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at top, #243b6b 0%, #090d1a 60%);
+  color: #f7f7f7;
+}
+
+.app {
+  width: min(100%, 1024px);
+  padding: 1rem;
+}
+
+.hud-bar {
+  text-align: center;
+  margin-bottom: 0.8rem;
+}
+
+.hud-bar h1 {
+  margin: 0;
+  font-size: clamp(1.4rem, 2.5vw, 2rem);
+}
+
+.hud-bar p {
+  margin: 0.35rem 0 0;
+  opacity: 0.9;
+}
+
+.game-shell {
+  position: relative;
+  border: 3px solid #5ee1ff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 14px 50px rgba(0, 0, 0, 0.45);
+}
+
+canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  background: linear-gradient(#71c7ff 0%, #9ce8ff 52%, #7ad36f 52%, #59aa57 100%);
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  padding: 2rem;
+  background: rgba(8, 10, 20, 0.72);
+  backdrop-filter: blur(4px);
+  gap: 0.9rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease-in;
+}
+
+.overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#action-button {
+  justify-self: center;
+  border: none;
+  border-radius: 999px;
+  padding: 0.65rem 1.2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #061123;
+  background: #5ee1ff;
+  cursor: pointer;
+}
+
+.controls {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 0.92rem;
+}
+
+.stats {
+  position: absolute;
+  top: 0.6rem;
+  left: 0.8rem;
+  right: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.45);
+}

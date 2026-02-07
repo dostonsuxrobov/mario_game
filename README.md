@@ -1,18 +1,31 @@
-# Mario Game
+# Star Hopper
 
-A small 2D platformer inspired by the classic Super Mario Bros written in vanilla JavaScript. Open `index.html` in a modern browser to play.
+A lightweight platformer built from scratch with plain HTML, CSS, and JavaScript. It runs fully client-side, so it's ready to host on GitHub Pages without any build step.
 
-## Features
+## Play locally
 
-- Three handcrafted stages that introduce pipes, bricks, question blocks, coins, and patrolling enemies.
-- Flagpoles and castles to complete each course and progress to the next level.
-- Persistent score, coin counter, lives system, and countdown timer across stages.
-- Title, game over, and victory screens with on-screen instructions.
+Open `index.html` directly in a browser, or run a local static server:
+
+```bash
+python3 -m http.server 8080
+```
+
+Then visit `http://localhost:8080`.
 
 ## Controls
 
-- **Arrow Left / Right**: Move
-- **Space / Z**: Jump
-- **Enter**: Start, retry after game over, or restart from the victory screen
+- **A / D** or **Left / Right arrows**: Move
+- **W / Space / Up arrow**: Jump
+- **Enter**: Start/restart when the overlay is visible
 
-Collect coins, bop enemies, and raise the flag in every stage to finish the adventure!
+## Objective
+
+Collect all 12 stars before the timer ends while avoiding slimes and falling into pits.
+
+## Deploy to GitHub Pages
+
+1. Push this repository to GitHub.
+2. Go to **Settings → Pages**.
+3. Set source to **Deploy from a branch**.
+4. Choose your branch (for example `main`) and root (`/`).
+5. Save, then open the generated GitHub Pages URL.
